@@ -1,9 +1,11 @@
 package com.haigaote.admin.controller;
 
 import com.haigaote.admin.service.IpManagementService;
+import com.haigaote.admin.dto.IpGeoLocationResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,5 +57,39 @@ public class LegacyIpController {
         response.put("timestamp", System.currentTimeMillis());
         
         return response;
+    }
+
+    /**
+     * 查询IP地理位置信息（兼容原有接口路径）
+     * 
+     * @param ipAddress 待查询的IP地址（可选，默认查询客户端IP）
+     * @param request HTTP请求对象
+     * @return IP地理位置信息
+     * @deprecated 建议使用 /api/ip/geo 接口
+     */
+    @GetMapping("/geo")
+    @Deprecated
+    public IpGeoLocationResponse getIpGeoLocation(
+            @RequestParam(value = "ip", required = false) String ipAddress,
+            HttpServletRequest request) {
+        
+        try {
+            if (ipAddress != null && !ipAddress.trim().isEmpty()) {
+                // 查询指定IP的地理位置
+                return ipManagementService.queryIpGeoLocation(ipAddress.trim());
+            } else {
+                // 查询客户端IP的地理位置
+                return ipManagementService.getClientIpGeoLocation(request);
+            }
+        } catch (Exception e) {
+            // 异常情况下返回错误信息
+            IpGeoLocationResponse errorResponse = new IpGeoLocationResponse();
+            errorResponse.setIp(ipAddress != null ? ipAddress : "未知");
+            errorResponse.setStatus("fail");
+            errorResponse.setMessage("查询地理位置失败: " + e.getMessage());
+            errorResponse.setTimestamp(System.currentTimeMillis());
+            
+            return errorResponse;
+        }
     }
 } 

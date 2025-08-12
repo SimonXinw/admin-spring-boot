@@ -9,6 +9,7 @@ xw 天才，开始写 java 啦！
 - ✅ IP地址格式验证功能
 - ✅ 内网/公网IP识别
 - ✅ 客户端详细信息获取
+- ✅ **IP地理位置查询功能** 🆕
 - ✅ RESTful API 接口
 - ✅ JSON 格式响应
 - ✅ 完善的异常处理
@@ -88,7 +89,34 @@ src/main/java/com/haigaote/admin/
 }
 ```
 
-### 4. 兼容接口（已废弃）
+### 4. 查询IP地理位置信息
+- **接口地址**: `GET /api/ip/geo?ip={ipAddress}`
+- **描述**: 查询指定IP或客户端IP的地理位置信息
+- **参数**: 
+  - `ip`: 待查询的IP地址（可选，不填则查询客户端IP）
+- **响应示例**:
+```json
+{
+    "ip": "8.8.8.8",
+    "status": "success",
+    "country": "美国",
+    "countryCode": "US",
+    "region": "CA",
+    "regionName": "加利福尼亚",
+    "city": "芒廷维尤",
+    "zip": "94043",
+    "lat": 37.4056,
+    "lon": -122.0775,
+    "timezone": "America/Los_Angeles",
+    "isp": "Google LLC",
+    "org": "Google Public DNS",
+    "as": "AS15169 Google LLC",
+    "message": "地理位置查询成功",
+    "timestamp": 1703749200000
+}
+```
+
+### 5. 兼容接口（已废弃）
 - **接口地址**: `GET /api/ip/my`
 - **描述**: 兼容原有接口，建议使用新的 `/api/ip/client` 接口
 - **状态**: `@Deprecated`
@@ -124,12 +152,20 @@ java -jar target/admin-spring-boot-0.0.1-SNAPSHOT.jar
 ### 基础功能测试
 - 获取IP信息: http://localhost:8080/api/ip/client
 - 获取详细信息: http://localhost:8080/api/ip/detail
+- 查询客户端IP地理位置: http://localhost:8080/api/ip/geo
 - 兼容接口: http://localhost:8080/api/ip/my
+- 兼容地理位置接口: http://localhost:8080/ip/geo
 
 ### IP验证功能测试
 - 验证内网IP: http://localhost:8080/api/ip/validate?ip=192.168.1.1
 - 验证公网IP: http://localhost:8080/api/ip/validate?ip=8.8.8.8
 - 验证无效IP: http://localhost:8080/api/ip/validate?ip=999.999.999.999
+
+### IP地理位置查询测试
+- 查询谷歌DNS地理位置: http://localhost:8080/api/ip/geo?ip=8.8.8.8
+- 查询百度IP地理位置: http://localhost:8080/api/ip/geo?ip=220.181.38.251
+- 查询客户端IP地理位置: http://localhost:8080/api/ip/geo
+- 查询内网IP地理位置: http://localhost:8080/api/ip/geo?ip=192.168.1.1
 
 ### 使用 curl 命令测试
 ```bash
@@ -141,6 +177,12 @@ curl "http://localhost:8080/api/ip/validate?ip=192.168.1.1"
 
 # 获取详细信息
 curl http://localhost:8080/api/ip/detail
+
+# 查询IP地理位置
+curl http://localhost:8080/api/ip/geo
+
+# 查询指定IP的地理位置
+curl "http://localhost:8080/api/ip/geo?ip=8.8.8.8"
 ```
 
 ## 开发说明
@@ -158,16 +200,26 @@ curl http://localhost:8080/api/ip/detail
 5. HTTP_X_FORWARDED_FOR
 6. request.getRemoteAddr()（直连IP）
 
+### 地理位置查询特性
+- **第三方API**: 使用免费的 ip-api.com 服务
+- **中文支持**: 支持中文地理位置信息显示
+- **内网处理**: 智能识别内网IP并提供友好提示
+- **异常处理**: 完善的错误处理和超时机制
+- **参数灵活**: 支持查询指定IP或当前客户端IP
+
 ### 扩展功能
 项目为IP管理模块预留了扩展空间，后续可以添加：
-- IP地理位置查询
+- ✅ IP地理位置查询（已实现）
 - IP黑白名单管理
 - IP访问统计
 - IP风险评估
+- IP地理位置缓存机制
 
 ## 注意事项
 1. 确保系统已安装 Java 17
 2. 确保系统已安装 Maven（如果使用命令行启动）
 3. 默认端口是8080，如果端口被占用可在 `application.properties` 中修改
 4. 项目使用内嵌 Tomcat，无需单独安装 Tomcat 服务器
-5. 新的API接口路径为 `/api/ip/*`，原有的 `/ip/my` 接口仍可使用但已标记为废弃 
+5. 新的API接口路径为 `/api/ip/*`，原有的 `/ip/my` 接口仍可使用但已标记为废弃
+6. 地理位置查询依赖外部网络，请确保服务器能访问互联网
+7. 内网IP会返回模拟的地理位置信息，无法获取真实位置 

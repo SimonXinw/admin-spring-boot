@@ -1,10 +1,14 @@
 package com.haigaote.admin.service;
 
 import com.haigaote.admin.dto.IpInfoResponse;
+import com.haigaote.admin.dto.IpGeoLocationResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Map;
 
 /**
  * IP管理服务类
@@ -16,6 +20,16 @@ import jakarta.servlet.http.HttpServletRequest;
  */
 @Service
 public class IpManagementService {
+
+    private final RestTemplate restTemplate;
+
+    /**
+     * 构造函数注入RestTemplate
+     */
+    @Autowired
+    public IpManagementService() {
+        this.restTemplate = new RestTemplate();
+    }
 
     /**
      * 获取客户端IP信息
@@ -154,7 +168,99 @@ public class IpManagementService {
         return ipAddress.startsWith("192.168.") || 
                ipAddress.startsWith("10.") || 
                ipAddress.startsWith("172.16.") ||
-               ipAddress.equals("127.0.0.1") ||
-               ipAddress.equals("localhost");
+                               ipAddress.equals("127.0.0.1") ||
+                ipAddress.equals("localhost");
+    }
+
+    /**
+     * 查询IP地理位置信息
+     * 使用免费的ip-api.com服务查询IP地理位置
+     * 
+     * @param ipAddress IP地址
+     * @return 地理位置信息
+     */
+    public IpGeoLocationResponse queryIpGeoLocation(String ipAddress) {
+        IpGeoLocationResponse response = new IpGeoLocationResponse();
+        response.setIp(ipAddress);
+        response.setTimestamp(System.currentTimeMillis());
+
+        try {
+            // 验证IP地址格式
+            if (!isValidIpFormat(ipAddress)) {
+                response.setStatus("fail");
+                response.setMessage("无效的IP地址格式");
+                return response;
+            }
+
+            // 内网IP特殊处理
+            if (isPrivateIp(ipAddress)) {
+                response.setStatus("success");
+                response.setCountry("中国");
+                response.setCountryCode("CN");
+                response.setRegion("本地网络");
+                response.setRegionName("内网环境");
+                response.setCity("本地");
+                response.setIsp("内网");
+                response.setMessage("内网IP地址，无法获取精确地理位置");
+                return response;
+            }
+
+            // 调用第三方API查询地理位置
+            String apiUrl = "http://ip-api.com/json/" + ipAddress + "?lang=zh-CN";
+            Map<String, Object> apiResponse = restTemplate.getForObject(apiUrl, Map.class);
+
+            if (apiResponse != null) {
+                response.setStatus((String) apiResponse.get("status"));
+                
+                if ("success".equals(response.getStatus())) {
+                    // 成功获取地理位置信息
+                    response.setCountry((String) apiResponse.get("country"));
+                    response.setCountryCode((String) apiResponse.get("countryCode"));
+                    response.setRegion((String) apiResponse.get("region"));
+                    response.setRegionName((String) apiResponse.get("regionName"));
+                    response.setCity((String) apiResponse.get("city"));
+                    response.setZip((String) apiResponse.get("zip"));
+                    response.setTimezone((String) apiResponse.get("timezone"));
+                    response.setIsp((String) apiResponse.get("isp"));
+                    response.setOrg((String) apiResponse.get("org"));
+                    response.setAsInfo((String) apiResponse.get("as"));
+                    
+                    // 处理经纬度
+                    Object lat = apiResponse.get("lat");
+                    Object lon = apiResponse.get("lon");
+                    if (lat != null) {
+                        response.setLat(Double.valueOf(lat.toString()));
+                    }
+                    if (lon != null) {
+                        response.setLon(Double.valueOf(lon.toString()));
+                    }
+                    
+                    response.setMessage("地理位置查询成功");
+                } else {
+                    // 查询失败
+                    response.setMessage((String) apiResponse.get("message"));
+                }
+            } else {
+                response.setStatus("fail");
+                response.setMessage("无法连接到地理位置查询服务");
+            }
+
+        } catch (Exception e) {
+            response.setStatus("fail");
+            response.setMessage("查询地理位置时发生错误: " + e.getMessage());
+        }
+
+        return response;
+    }
+
+    /**
+     * 获取客户端IP的地理位置信息
+     * 
+     * @param request HTTP请求对象
+     * @return 地理位置信息
+     */
+    public IpGeoLocationResponse getClientIpGeoLocation(HttpServletRequest request) {
+        String clientIp = extractClientIpAddress(request);
+        return queryIpGeoLocation(clientIp);
     }
 } 
