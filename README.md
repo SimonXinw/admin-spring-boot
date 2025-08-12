@@ -90,7 +90,7 @@ src/main/java/com/haigaote/admin/
 ```
 
 ### 4. 查询IP地理位置信息
-- **接口地址**: `GET /api/ip/geo?ip={ipAddress}`
+- **接口地址**: `GET /api/ip/my/geo?ip={ipAddress}`
 - **描述**: 查询指定IP或客户端IP的地理位置信息
 - **参数**: 
   - `ip`: 待查询的IP地址（可选，不填则查询客户端IP）
@@ -152,9 +152,9 @@ java -jar target/admin-spring-boot-0.0.1-SNAPSHOT.jar
 ### 基础功能测试
 - 获取IP信息: http://localhost:8080/api/ip/client
 - 获取详细信息: http://localhost:8080/api/ip/detail
-- 查询客户端IP地理位置: http://localhost:8080/api/ip/geo
+- 查询客户端IP地理位置: http://localhost:8080/api/ip/my/geo
 - 兼容接口: http://localhost:8080/api/ip/my
-- 兼容地理位置接口: http://localhost:8080/ip/geo
+- 兼容地理位置接口: http://localhost:8080/ip/my/geo
 
 ### IP验证功能测试
 - 验证内网IP: http://localhost:8080/api/ip/validate?ip=192.168.1.1
@@ -162,10 +162,10 @@ java -jar target/admin-spring-boot-0.0.1-SNAPSHOT.jar
 - 验证无效IP: http://localhost:8080/api/ip/validate?ip=999.999.999.999
 
 ### IP地理位置查询测试
-- 查询谷歌DNS地理位置: http://localhost:8080/api/ip/geo?ip=8.8.8.8
-- 查询百度IP地理位置: http://localhost:8080/api/ip/geo?ip=220.181.38.251
-- 查询客户端IP地理位置: http://localhost:8080/api/ip/geo
-- 查询内网IP地理位置: http://localhost:8080/api/ip/geo?ip=192.168.1.1
+- 查询谷歌DNS地理位置: http://localhost:8080/api/ip/my/geo?ip=8.8.8.8
+- 查询百度IP地理位置: http://localhost:8080/api/ip/my/geo?ip=220.181.38.251
+- 查询客户端IP地理位置: http://localhost:8080/api/ip/my/geo
+- 查询内网IP地理位置: http://localhost:8080/api/ip/my/geo?ip=192.168.1.1
 
 ### 使用 curl 命令测试
 ```bash
@@ -179,10 +179,10 @@ curl "http://localhost:8080/api/ip/validate?ip=192.168.1.1"
 curl http://localhost:8080/api/ip/detail
 
 # 查询IP地理位置
-curl http://localhost:8080/api/ip/geo
+curl http://localhost:8080/api/ip/my/geo
 
 # 查询指定IP的地理位置
-curl "http://localhost:8080/api/ip/geo?ip=8.8.8.8"
+curl "http://localhost:8080/api/ip/my/geo?ip=8.8.8.8"
 ```
 
 ## 开发说明

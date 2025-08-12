@@ -65,9 +65,9 @@ public class LegacyIpController {
      * @param ipAddress 待查询的IP地址（可选，默认查询客户端IP）
      * @param request HTTP请求对象
      * @return IP地理位置信息
-     * @deprecated 建议使用 /api/ip/geo 接口
+     * @deprecated 建议使用 /api/ip/my/geo 接口
      */
-    @GetMapping("/geo")
+    @GetMapping("/my/geo")
     @Deprecated
     public IpGeoLocationResponse getIpGeoLocation(
             @RequestParam(value = "ip", required = false) String ipAddress,

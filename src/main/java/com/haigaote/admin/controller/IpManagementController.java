@@ -133,7 +133,7 @@ public class IpManagementController {
      * @param request HTTP请求对象
      * @return IP地理位置信息
      */
-    @GetMapping("/geo")
+    @GetMapping("/my/geo")
     public ResponseEntity<IpGeoLocationResponse> getIpGeoLocation(
             @RequestParam(value = "ip", required = false) String ipAddress,
             HttpServletRequest request) {
