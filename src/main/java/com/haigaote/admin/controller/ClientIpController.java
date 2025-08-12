@@ -13,18 +13,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 兼容性IP控制器
- * 保持原有的API路径，确保向后兼容性
+ * 客户端IP控制器
+ * 提供客户端IP相关操作的简洁API接口（不带/api前缀）
  * 
  * @author xw
  * @version 1.0
  * @since 2025-01-01
- * @deprecated 建议使用 IpManagementController 中的新接口
  */
 @RestController
 @RequestMapping("/ip")
-@Deprecated
-public class LegacyIpController {
+public class ClientIpController {
 
     private final IpManagementService ipManagementService;
 
@@ -34,20 +32,18 @@ public class LegacyIpController {
      * @param ipManagementService IP管理服务实例
      */
     @Autowired
-    public LegacyIpController(IpManagementService ipManagementService) {
+    public ClientIpController(IpManagementService ipManagementService) {
         this.ipManagementService = ipManagementService;
     }
 
     /**
-     * 获取客户端IP地址（兼容原有接口）
-     * 保持与原有IpController完全相同的响应格式
+     * 获取客户端IP地址
+     * 提供最直接的客户端IP获取方式
      * 
      * @param request HTTP请求对象
      * @return 客户端IP信息
-     * @deprecated 建议使用 /api/ip/client 接口
      */
     @GetMapping("/my")
-    @Deprecated
     public Map<String, Object> getClientIp(HttpServletRequest request) {
         String clientIp = ipManagementService.extractClientIpAddress(request);
         
@@ -60,15 +56,14 @@ public class LegacyIpController {
     }
 
     /**
-     * 查询IP地理位置信息（兼容原有接口路径）
+     * 查询客户端或指定IP的地理位置信息
+     * 提供最直接的IP地理位置查询方式
      * 
      * @param ipAddress 待查询的IP地址（可选，默认查询客户端IP）
      * @param request HTTP请求对象
      * @return IP地理位置信息
-     * @deprecated 建议使用 /api/ip/my/geo 接口
      */
     @GetMapping("/my/geo")
-    @Deprecated
     public IpGeoLocationResponse getIpGeoLocation(
             @RequestParam(value = "ip", required = false) String ipAddress,
             HttpServletRequest request) {

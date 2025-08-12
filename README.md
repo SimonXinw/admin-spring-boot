@@ -29,8 +29,8 @@ xw 天才，开始写 java 啦！
 src/main/java/com/haigaote/admin/
 ├── AdminApplication.java              # 主启动类
 ├── controller/                        # 控制层
-│   ├── IpManagementController.java    # IP管理控制器（新功能）
-│   └── LegacyIpController.java        # 兼容性控制器（保持原有接口）
+│   ├── IpManagementController.java    # IP管理控制器（完整功能API）
+│   └── ClientIpController.java        # 客户端IP控制器（简化路径API）
 ├── service/                           # 服务层
 │   └── IpManagementService.java       # IP管理服务
 ├── dto/                              # 数据传输对象
@@ -116,10 +116,10 @@ src/main/java/com/haigaote/admin/
 }
 ```
 
-### 5. 兼容接口（已废弃）
-- **接口地址**: `GET /api/ip/my`
-- **描述**: 兼容原有接口，建议使用新的 `/api/ip/client` 接口
-- **状态**: `@Deprecated`
+### 5. 客户端IP接口（不带/api前缀）
+- **基础接口**: `GET /ip/my`
+- **地理位置接口**: `GET /ip/my/geo?ip={ipAddress}`
+- **描述**: 专门处理客户端IP相关操作，提供更简洁的API路径，方便快速调用
 
 ## 启动方式
 
@@ -153,8 +153,8 @@ java -jar target/admin-spring-boot-0.0.1-SNAPSHOT.jar
 - 获取IP信息: http://localhost:8080/api/ip/client
 - 获取详细信息: http://localhost:8080/api/ip/detail
 - 查询客户端IP地理位置: http://localhost:8080/api/ip/my/geo
-- 兼容接口: http://localhost:8080/api/ip/my
-- 兼容地理位置接口: http://localhost:8080/ip/my/geo
+- 客户端IP接口: http://localhost:8080/ip/my
+- 客户端IP地理位置接口: http://localhost:8080/ip/my/geo
 
 ### IP验证功能测试
 - 验证内网IP: http://localhost:8080/api/ip/validate?ip=192.168.1.1
@@ -189,6 +189,8 @@ curl "http://localhost:8080/api/ip/my/geo?ip=8.8.8.8"
 
 ### 代码结构说明
 - **Controller层**: 负责接收HTTP请求，参数验证，调用Service层处理业务逻辑
+  - `IpManagementController`: 完整功能的API接口（/api/ip/*）
+  - `ClientIpController`: 客户端IP专用API接口（/ip/*）
 - **Service层**: 负责具体的业务逻辑实现，IP地址提取、验证等核心功能
 - **DTO层**: 数据传输对象，规范API响应格式
 
@@ -220,6 +222,7 @@ curl "http://localhost:8080/api/ip/my/geo?ip=8.8.8.8"
 2. 确保系统已安装 Maven（如果使用命令行启动）
 3. 默认端口是8080，如果端口被占用可在 `application.properties` 中修改
 4. 项目使用内嵌 Tomcat，无需单独安装 Tomcat 服务器
-5. 新的API接口路径为 `/api/ip/*`，原有的 `/ip/my` 接口仍可使用但已标记为废弃
+5. 提供两套API接口：完整管理版（`/api/ip/*`）和客户端专用版（`/ip/*`）
 6. 地理位置查询依赖外部网络，请确保服务器能访问互联网
-7. 内网IP会返回模拟的地理位置信息，无法获取真实位置 
+7. 内网IP会返回模拟的地理位置信息，无法获取真实位置
+8. 客户端专用API路径更短，专注于客户端IP操作 
