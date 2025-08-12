@@ -1,26 +1,47 @@
 xw 天才，开始写 java 啦！
-# Spring Boot Demo 项目
+# Admin Spring Boot 管理后台项目
 
 ## 项目说明
-这是一个基于 Java 17 和 Spring Boot 3.2.0 的演示项目，实现了获取客户端IP地址的功能。
+这是一个基于 Java 17 和 Spring Boot 3.2.0 的管理后台项目，提供了完整的IP地址管理功能，包括获取、验证、分析等操作。
 
 ## 功能特性
 - ✅ 获取客户端真实IP地址（支持代理服务器环境）
+- ✅ IP地址格式验证功能
+- ✅ 内网/公网IP识别
+- ✅ 客户端详细信息获取
 - ✅ RESTful API 接口
 - ✅ JSON 格式响应
+- ✅ 完善的异常处理
 - ✅ 内嵌 Tomcat 服务器
 - ✅ 支持热部署（spring-boot-devtools）
+- ✅ 分层架构设计（Controller-Service-DTO）
 
 ## 技术栈
 - Java 17
 - Spring Boot 3.2.0
 - Maven 构建工具
 - 内嵌 Tomcat 服务器
+- Jackson JSON处理
+
+## 项目结构
+```
+src/main/java/com/haigaote/admin/
+├── AdminApplication.java              # 主启动类
+├── controller/                        # 控制层
+│   ├── IpManagementController.java    # IP管理控制器（新功能）
+│   └── LegacyIpController.java        # 兼容性控制器（保持原有接口）
+├── service/                           # 服务层
+│   └── IpManagementService.java       # IP管理服务
+├── dto/                              # 数据传输对象
+│   └── IpInfoResponse.java           # IP信息响应DTO
+└── config/                           # 配置类目录
+```
 
 ## API 接口
 
-### 获取客户端IP
-- **接口地址**: `GET /ip/my`
+### 1. 获取客户端IP信息
+- **接口地址**: `GET /api/ip/client`
+- **描述**: 获取客户端IP地址基本信息
 - **响应格式**: JSON
 - **响应示例**:
 ```json
@@ -31,17 +52,58 @@ xw 天才，开始写 java 啦！
 }
 ```
 
+### 2. 验证IP地址格式
+- **接口地址**: `GET /api/ip/validate?ip={ipAddress}`
+- **描述**: 验证指定IP地址的格式是否正确
+- **参数**: 
+  - `ip`: 待验证的IP地址（必填）
+- **响应示例**:
+```json
+{
+    "ip": "192.168.1.100",
+    "valid": true,
+    "private": true,
+    "message": "IP地址格式正确",
+    "timestamp": 1703749200000
+}
+```
+
+### 3. 获取客户端IP详细信息
+- **接口地址**: `GET /api/ip/detail`
+- **描述**: 获取客户端IP的详细信息，包括类型、用户代理等
+- **响应示例**:
+```json
+{
+    "clientIp": "192.168.1.100",
+    "validFormat": true,
+    "privateIp": true,
+    "ipType": "内网IP",
+    "userAgent": "Mozilla/5.0...",
+    "remoteHost": "192.168.1.100",
+    "remotePort": 54321,
+    "serverName": "localhost",
+    "serverPort": 8080,
+    "message": "IP详细信息获取成功",
+    "timestamp": 1703749200000
+}
+```
+
+### 4. 兼容接口（已废弃）
+- **接口地址**: `GET /api/ip/my`
+- **描述**: 兼容原有接口，建议使用新的 `/api/ip/client` 接口
+- **状态**: `@Deprecated`
+
 ## 启动方式
 
 ### 方式一：在 Cursor 中启动调试器
-1. 打开 `SpringBootDemoApplication.java` 文件
+1. 打开 `src/main/java/com/haigaote/admin/AdminApplication.java` 文件
 2. 在 `main` 方法左侧点击运行按钮或者在方法上右键选择 "Debug Java"
 3. 项目将在调试模式下启动
 
 ### 方式二：使用 Maven 命令启动
 ```bash
 # 进入项目目录
-cd spring-boot-demo
+cd admin-spring-boot
 
 # 启动项目
 mvn spring-boot:run
@@ -53,16 +115,59 @@ mvn spring-boot:run
 mvn clean package
 
 # 运行jar包
-java -jar target/spring-boot-demo-0.0.1-SNAPSHOT.jar
+java -jar target/admin-spring-boot-0.0.1-SNAPSHOT.jar
 ```
 
 ## 测试接口
-项目启动后，访问以下URL测试功能：
-- 浏览器访问: http://localhost:8080/ip/my
-- 或使用 curl 命令: `curl http://localhost:8080/ip/my`
+项目启动后，可以访问以下URL测试功能：
+
+### 基础功能测试
+- 获取IP信息: http://localhost:8080/api/ip/client
+- 获取详细信息: http://localhost:8080/api/ip/detail
+- 兼容接口: http://localhost:8080/api/ip/my
+
+### IP验证功能测试
+- 验证内网IP: http://localhost:8080/api/ip/validate?ip=192.168.1.1
+- 验证公网IP: http://localhost:8080/api/ip/validate?ip=8.8.8.8
+- 验证无效IP: http://localhost:8080/api/ip/validate?ip=999.999.999.999
+
+### 使用 curl 命令测试
+```bash
+# 获取客户端IP
+curl http://localhost:8080/api/ip/client
+
+# 验证IP地址
+curl "http://localhost:8080/api/ip/validate?ip=192.168.1.1"
+
+# 获取详细信息
+curl http://localhost:8080/api/ip/detail
+```
+
+## 开发说明
+
+### 代码结构说明
+- **Controller层**: 负责接收HTTP请求，参数验证，调用Service层处理业务逻辑
+- **Service层**: 负责具体的业务逻辑实现，IP地址提取、验证等核心功能
+- **DTO层**: 数据传输对象，规范API响应格式
+
+### IP获取优先级
+1. X-Forwarded-For（代理服务器传递的原始客户端IP）
+2. Proxy-Client-IP（Apache代理）
+3. WL-Proxy-Client-IP（WebLogic代理）
+4. HTTP_CLIENT_IP
+5. HTTP_X_FORWARDED_FOR
+6. request.getRemoteAddr()（直连IP）
+
+### 扩展功能
+项目为IP管理模块预留了扩展空间，后续可以添加：
+- IP地理位置查询
+- IP黑白名单管理
+- IP访问统计
+- IP风险评估
 
 ## 注意事项
 1. 确保系统已安装 Java 17
 2. 确保系统已安装 Maven（如果使用命令行启动）
 3. 默认端口是8080，如果端口被占用可在 `application.properties` 中修改
-4. 项目使用内嵌 Tomcat，无需单独安装 Tomcat 服务器 
+4. 项目使用内嵌 Tomcat，无需单独安装 Tomcat 服务器
+5. 新的API接口路径为 `/api/ip/*`，原有的 `/ip/my` 接口仍可使用但已标记为废弃 

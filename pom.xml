@@ -13,10 +13,10 @@
     </parent>
     
     <groupId>com.example</groupId>
-    <artifactId>spring-boot-demo</artifactId>
+    <artifactId>admin-spring-boot</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>spring-boot-demo</name>
-    <description>Spring Boot项目演示</description>
+    <name>admin-spring-boot</name>
+    <description>Spring Boot管理后台项目</description>
     
     <properties>
         <java.version>17</java.version>
