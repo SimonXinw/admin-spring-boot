@@ -2,6 +2,8 @@ package com.haigaote.admin.service;
 
 import com.haigaote.admin.dto.IpInfoResponse;
 import com.haigaote.admin.dto.IpGeoLocationResponse;
+import com.haigaote.admin.entity.ClientIp;
+import com.haigaote.admin.mapper.ClientIpMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
@@ -22,13 +24,15 @@ import java.util.Map;
 public class IpManagementService {
 
     private final RestTemplate restTemplate;
+    private final ClientIpMapper clientIpMapper;
 
     /**
-     * 构造函数注入RestTemplate
+     * 构造函数注入依赖
      */
     @Autowired
-    public IpManagementService() {
+    public IpManagementService(ClientIpMapper clientIpMapper) {
         this.restTemplate = new RestTemplate();
+        this.clientIpMapper = clientIpMapper;
     }
 
     /**
@@ -251,6 +255,68 @@ public class IpManagementService {
         }
 
         return response;
+    }
+
+    /**
+     * 保存客户端IP信息到数据库
+     * 
+     * @param request HTTP请求对象
+     * @return 保存结果，包含是否成功和ClientIp实体
+     */
+    public SaveResult saveClientIpInfo(HttpServletRequest request) {
+        String clientIp = extractClientIpAddress(request);
+        boolean isValidFormat = isValidIpFormat(clientIp);
+        boolean isPrivate = isPrivateIp(clientIp);
+        
+        ClientIp clientIpEntity = new ClientIp(
+            clientIp,
+            request.getHeader("User-Agent"),
+            request.getRemoteHost(),
+            request.getRemotePort(),
+            request.getServerName(),
+            request.getServerPort(),
+            isPrivate ? "内网IP" : "公网IP",
+            isValidFormat,
+            isPrivate,
+            System.currentTimeMillis()
+        );
+        
+        try {
+            clientIpMapper.insert(clientIpEntity);
+            System.out.println("成功保存客户端IP信息到数据库: " + clientIp);
+            return new SaveResult(true, "保存成功", clientIpEntity);
+        } catch (Exception e) {
+            System.err.println("保存客户端IP信息到数据库失败: " + e.getMessage());
+            e.printStackTrace();
+            return new SaveResult(false, "保存失败: " + e.getMessage(), clientIpEntity);
+        }
+    }
+
+    /**
+     * 保存结果内部类
+     */
+    public static class SaveResult {
+        private final boolean success;
+        private final String message;
+        private final ClientIp clientIp;
+
+        public SaveResult(boolean success, String message, ClientIp clientIp) {
+            this.success = success;
+            this.message = message;
+            this.clientIp = clientIp;
+        }
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public ClientIp getClientIp() {
+            return clientIp;
+        }
     }
 
     /**

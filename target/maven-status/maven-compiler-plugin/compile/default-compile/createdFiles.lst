@@ -1,0 +1,8 @@
+com\haigaote\admin\controller\ClientIpController.class
+com\haigaote\admin\controller\IpManagementController.class
+com\haigaote\admin\mapper\ClientIpMapper.class
+com\haigaote\admin\dto\IpGeoLocationResponse.class
+com\haigaote\admin\entity\ClientIp.class
+com\haigaote\admin\AdminApplication.class
+com\haigaote\admin\dto\IpInfoResponse.class
+com\haigaote\admin\service\IpManagementService.class

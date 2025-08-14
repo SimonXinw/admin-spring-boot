@@ -38,7 +38,7 @@ public class ClientIpController {
 
     /**
      * 获取客户端IP地址
-     * 提供最直接的客户端IP获取方式
+     * 提供最直接的客户端IP获取方式，同时保存到数据库
      * 
      * @param request HTTP请求对象
      * @return 客户端IP信息
@@ -47,10 +47,20 @@ public class ClientIpController {
     public Map<String, Object> getClientIp(HttpServletRequest request) {
         String clientIp = ipManagementService.extractClientIpAddress(request);
         
+        // 保存客户端IP信息到数据库
+        IpManagementService.SaveResult saveResult = ipManagementService.saveClientIpInfo(request);
+        
         Map<String, Object> response = new HashMap<>();
         response.put("clientIp", clientIp);
-        response.put("message", "客户端IP地址获取成功");
         response.put("timestamp", System.currentTimeMillis());
+        response.put("saveSuccess", saveResult.isSuccess());
+        
+        if (saveResult.isSuccess()) {
+            response.put("message", "客户端IP地址获取成功，已保存到数据库");
+        } else {
+            response.put("message", "客户端IP地址获取成功，但保存到数据库失败");
+            response.put("saveError", saveResult.getMessage());
+        }
         
         return response;
     }
