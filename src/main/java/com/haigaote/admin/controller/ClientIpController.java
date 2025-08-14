@@ -58,6 +58,8 @@ public class ClientIpController {
             
             // 立即返回结果
             Map<String, Object> response = new HashMap<>();
+            response.put("code", 200);
+            response.put("success", true);
             response.put("clientIp", clientIp);
             response.put("message", "客户端IP地址获取成功");
             response.put("timestamp", System.currentTimeMillis());
@@ -67,6 +69,8 @@ public class ClientIpController {
         } catch (Exception e) {
             // 异常情况下返回错误信息
             Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("code", 500);
+            errorResponse.put("success", false);
             errorResponse.put("clientIp", "未知");
             errorResponse.put("message", "获取IP地址失败: " + e.getMessage());
             errorResponse.put("timestamp", System.currentTimeMillis());
