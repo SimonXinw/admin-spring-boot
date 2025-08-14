@@ -8,9 +8,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * IP管理服务类
@@ -328,5 +330,57 @@ public class IpManagementService {
     public IpGeoLocationResponse getClientIpGeoLocation(HttpServletRequest request) {
         String clientIp = extractClientIpAddress(request);
         return queryIpGeoLocation(clientIp);
+    }
+
+    /**
+     * 异步保存客户端IP信息到数据库
+     * 使用专门的数据库异步线程池，不阻塞主线程
+     * 
+     * @param request HTTP请求对象
+     * @return CompletableFuture包装的保存结果
+     */
+    @Async("dbAsyncExecutor")
+    public CompletableFuture<SaveResult> saveClientIpInfoAsync(HttpServletRequest request) {
+        String clientIp = extractClientIpAddress(request);
+        boolean isValidFormat = isValidIpFormat(clientIp);
+        boolean isPrivate = isPrivateIp(clientIp);
+        
+        ClientIp clientIpEntity = new ClientIp(
+            clientIp,
+            request.getHeader("User-Agent"),
+            request.getRemoteHost(),
+            request.getRemotePort(),
+            request.getServerName(),
+            request.getServerPort(),
+            isPrivate ? "内网IP" : "公网IP",
+            isValidFormat,
+            isPrivate,
+            System.currentTimeMillis()
+        );
+        
+        try {
+            clientIpMapper.insert(clientIpEntity);
+            System.out.println("异步保存客户端IP信息成功: " + clientIp + " [线程: " + Thread.currentThread().getName() + "]");
+            return CompletableFuture.completedFuture(new SaveResult(true, "保存成功", clientIpEntity));
+        } catch (Exception e) {
+            System.err.println("异步保存客户端IP信息失败: " + e.getMessage() + " [线程: " + Thread.currentThread().getName() + "]");
+            e.printStackTrace();
+            return CompletableFuture.completedFuture(new SaveResult(false, "保存失败: " + e.getMessage(), clientIpEntity));
+        }
+    }
+
+    /**
+     * 简化版异步保存，只记录日志，不返回结果
+     * 进一步提高性能，适用于只需要记录但不关心结果的场景
+     * 
+     * @param request HTTP请求对象
+     */
+    @Async("dbAsyncExecutor")
+    public void saveClientIpInfoAsyncSimple(HttpServletRequest request) {
+        try {
+            saveClientIpInfo(request);
+        } catch (Exception e) {
+            System.err.println("异步保存IP信息时发生错误: " + e.getMessage() + " [线程: " + Thread.currentThread().getName() + "]");
+        }
     }
 } 

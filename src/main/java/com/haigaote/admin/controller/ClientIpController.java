@@ -2,6 +2,7 @@ package com.haigaote.admin.controller;
 
 import com.haigaote.admin.service.IpManagementService;
 import com.haigaote.admin.dto.IpGeoLocationResponse;
+import com.haigaote.admin.config.PerformanceMonitor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,44 +26,53 @@ import java.util.Map;
 public class ClientIpController {
 
     private final IpManagementService ipManagementService;
+    private final PerformanceMonitor performanceMonitor;
 
     /**
-     * 构造函数注入IP管理服务
+     * 构造函数注入服务
      * 
      * @param ipManagementService IP管理服务实例
+     * @param performanceMonitor 性能监控实例
      */
     @Autowired
-    public ClientIpController(IpManagementService ipManagementService) {
+    public ClientIpController(IpManagementService ipManagementService, PerformanceMonitor performanceMonitor) {
         this.ipManagementService = ipManagementService;
+        this.performanceMonitor = performanceMonitor;
     }
 
     /**
      * 获取客户端IP地址
-     * 提供最直接的客户端IP获取方式，同时保存到数据库
+     * 优先快速返回IP地址，异步保存到数据库以提高响应速度
      * 
      * @param request HTTP请求对象
      * @return 客户端IP信息
      */
     @GetMapping("/my")
     public Map<String, Object> getClientIp(HttpServletRequest request) {
-        String clientIp = ipManagementService.extractClientIpAddress(request);
-        
-        // 保存客户端IP信息到数据库
-        IpManagementService.SaveResult saveResult = ipManagementService.saveClientIpInfo(request);
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("clientIp", clientIp);
-        response.put("timestamp", System.currentTimeMillis());
-        response.put("saveSuccess", saveResult.isSuccess());
-        
-        if (saveResult.isSuccess()) {
-            response.put("message", "客户端IP地址获取成功，已保存到数据库");
-        } else {
-            response.put("message", "客户端IP地址获取成功，但保存到数据库失败");
-            response.put("saveError", saveResult.getMessage());
+        try {
+            // 快速提取IP地址
+            String clientIp = ipManagementService.extractClientIpAddress(request);
+            
+            // 异步保存到数据库，不阻塞响应
+            ipManagementService.saveClientIpInfoAsyncSimple(request);
+            
+            // 立即返回结果
+            Map<String, Object> response = new HashMap<>();
+            response.put("clientIp", clientIp);
+            response.put("message", "客户端IP地址获取成功");
+            response.put("timestamp", System.currentTimeMillis());
+            
+            return response;
+            
+        } catch (Exception e) {
+            // 异常情况下返回错误信息
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("clientIp", "未知");
+            errorResponse.put("message", "获取IP地址失败: " + e.getMessage());
+            errorResponse.put("timestamp", System.currentTimeMillis());
+            
+            return errorResponse;
         }
-        
-        return response;
     }
 
     /**
@@ -93,6 +103,35 @@ public class ClientIpController {
             errorResponse.setStatus("fail");
             errorResponse.setMessage("查询地理位置失败: " + e.getMessage());
             errorResponse.setTimestamp(System.currentTimeMillis());
+            
+            return errorResponse;
+        }
+    }
+
+    /**
+     * 获取性能监控报告
+     * 查看异步线程池的运行状态
+     * 
+     * @return 性能监控信息
+     */
+    @GetMapping("/performance")
+    public Map<String, Object> getPerformanceReport() {
+        try {
+            String report = performanceMonitor.getPerformanceReport();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "性能监控报告获取成功");
+            response.put("report", report);
+            response.put("timestamp", System.currentTimeMillis());
+            
+            return response;
+            
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("status", "error");
+            errorResponse.put("message", "获取性能监控报告失败: " + e.getMessage());
+            errorResponse.put("timestamp", System.currentTimeMillis());
             
             return errorResponse;
         }
